@@ -1,0 +1,278 @@
+db.aeroporto.insertMany([
+  {
+    codiceIATA: "BRI",
+    paese: "IT",
+    nome: "Aeroporto Karol Wojtyla",
+    città: "Bari",
+    fusoOrario: "Europe/Rome",
+    coordinate: { lat: 41.1389, lon: 16.7606 },
+    terminal: [
+      { codiceTerminal: "T1", tipo: "Check-in" },
+      { codiceTerminal: "T2", tipo: "Boarding" }
+    ]
+  },
+  {
+    codiceIATA: "FCO",
+    paese: "IT",
+    nome: "Aeroporto Leonardo da Vinci",
+    città: "Roma",
+    fusoOrario: "Europe/Rome",
+    coordinate: { lat: 41.8003, lon: 12.2389 },
+    terminal: [
+      { codiceTerminal: "T1", tipo: "Security" },
+      { codiceTerminal: "T3", tipo: "Baggage" }
+    ]
+  }
+])
+
+
+db.gate.insertMany([
+  { numeroGate: 1, stato: "Libero" },
+  { numeroGate: 2, stato: "Occupato" },
+  { numeroGate: 3, stato: "In Manutenzione" },
+  { numeroGate: 4, stato: "Chiuso" }
+])
+
+db.compagnia_aerea.insertMany([
+  { codiceIATA: "AZ", nomeCommerciale: "ITA Airways", paese: "IT", alleanza: "SkyTeam" },
+  { codiceIATA: "LH", nomeCommerciale: "Lufthansa", paese: "DE", alleanza: "Star Alliance" },
+  { codiceIATA: "BA", nomeCommerciale: "British Airways", paese: "UK", alleanza: "Oneworld" }
+])
+
+
+db.aeroporto_comp.insertMany([
+  { codiceAeroporto: "BRI", codiceCompagnia: "AZ" },
+  { codiceAeroporto: "FCO", codiceCompagnia: "LH" },
+  { codiceAeroporto: "FCO", codiceCompagnia: "BA" }
+])
+
+
+db.aeromobile.insertMany([
+  { idAeromobile: "I-ABCD", codiceIATAcomp: "AZ", modello: "A320", produttore: "Airbus", annoProduzione: 2015, capacitaPasseggeri: 180 },
+  { idAeromobile: "D-EFGH", codiceIATAcomp: "LH", modello: "B737", produttore: "Boeing", annoProduzione: 2018, capacitaPasseggeri: 160 },
+  { idAeromobile: "G-IJKL", codiceIATAcomp: "BA", modello: "A350", produttore: "Airbus", annoProduzione: 2020, capacitaPasseggeri: 300 }
+])
+
+
+db.volo_programmato.insertMany([
+  {
+    numeroVolo: "AZ1234",
+    idaporigine: "BRI",
+    idapdestinazione: "FCO",
+    giorniOperativi: [1, 3, 5],
+    durataMinuti: 60,
+    orarioppartenza: "2025-12-02T08:00:00Z",
+    orarioparrivo: "2025-12-02T09:00:00Z"
+  },
+  {
+    numeroVolo: "LH5678",
+    idaporigine: "FCO",
+    idapdestinazione: "MUC",
+    giorniOperativi: [2, 4, 6],
+    durataMinuti: 90,
+    orarioppartenza: "2025-12-03T10:00:00Z",
+    orarioparrivo: "2025-12-03T11:30:00Z"
+  }
+])
+
+
+const gate1 = db.gate.findOne({ numeroGate: 1 })._id
+const gate2 = db.gate.findOne({ numeroGate: 2 })._id
+const aero1 = db.aeromobile.findOne({ idAeromobile: "I-ABCD" })._id
+const aero2 = db.aeromobile.findOne({ idAeromobile: "D-EFGH" })._id
+
+db.volo_operativo.insertMany([
+  {
+    idvolo: "AZ1234-20251202",
+    dataOraPartenza: "2025-12-02T08:05:00Z",
+    statoVolo: "Boarding",
+    gateAssegnato: gate1,
+    aeromobile: aero1,
+    personale: [
+      { matricola: "P001", nome: "Marco", cognome: "Rossi", ruolo: "Comandante" },
+      { matricola: "P002", nome: "Luca", cognome: "Bianchi", ruolo: "Primo Ufficiale" }
+    ]
+  },
+  {
+    idvolo: "LH5678-20251203",
+    dataOraPartenza: "2025-12-03T10:10:00Z",
+    statoVolo: "Programmato",
+    gateAssegnato: gate2,
+    aeromobile: aero2,
+    personale: [
+      { matricola: "P010", nome: "Hans", cognome: "Müller", ruolo: "Comandante" },
+      { matricola: "P011", nome: "Sophie", cognome: "Klein", ruolo: "Assistente di Volo" }
+    ]
+  }
+])
+
+db.passeggero.insertMany([
+  {
+    id: "PS001",
+    nome: "Giulia",
+    cognome: "Neri",
+    dataNascita: "1990-05-15",
+    prenotazioni: [
+      { PNR: "ABC123", classeViaggio: "Economy", statoPrenotazione: "Confermata", dataPrenotazione: "2025-11-20" }
+    ]
+  },
+  {
+    id: "PS002",
+    nome: "Francesco",
+    cognome: "De Luca",
+    dataNascita: "1985-03-10",
+    prenotazioni: [
+      { PNR: "XYZ789", classeViaggio: "Business", statoPrenotazione: "Check-in", dataPrenotazione: "2025-11-25" }
+    ]
+  }
+])
+
+const voloOp1 = db.volo_operativo.findOne({ idvolo: "AZ1234-20251202" })._id
+const voloOp2 = db.volo_operativo.findOne({ idvolo: "LH5678-20251203" })._id
+const pass1 = db.passeggero.findOne({ id: "PS001" })._id
+const pass2 = db.passeggero.findOne({ id: "PS002" })._id
+
+db.biglietto.insertMany([
+  { numeroBiglietto: "000-1234567890", postoAssegnato: "12A", voloOperativo: voloOp1, passeggero: pass1 },
+  { numeroBiglietto: "000-0987654321", postoAssegnato: "2C", voloOperativo: voloOp2, passeggero: pass2 }
+])
+
+
+// Aeroporti aggiuntivi
+db.aeroporto.insertMany([
+  {
+    codiceIATA: "MXP",
+    paese: "IT",
+    nome: "Aeroporto di Milano Malpensa",
+    città: "Milano",
+    fusoOrario: "Europe/Rome",
+    coordinate: { lat: 45.63, lon: 8.72 },
+    terminal: [
+      { codiceTerminal: "T1", tipo: "Check-in" },
+      { codiceTerminal: "T2", tipo: "Boarding" }
+    ]
+  },
+  {
+    codiceIATA: "JFK",
+    paese: "US",
+    nome: "John F. Kennedy International Airport",
+    città: "New York",
+    fusoOrario: "America/New_York",
+    coordinate: { lat: 40.6413, lon: -73.7781 },
+    terminal: [
+      { codiceTerminal: "T4", tipo: "Security" },
+      { codiceTerminal: "T5", tipo: "Boarding" }
+    ]
+  }
+])
+
+// Gate aggiuntivi
+db.gate.insertMany([
+  { numeroGate: 5, stato: "Libero" },
+  { numeroGate: 6, stato: "Occupato" },
+  { numeroGate: 7, stato: "Libero" }
+])
+
+// Compagnie Aeree aggiuntive
+db.compagnia_aerea.insertMany([
+  { codiceIATA: "AF", nomeCommerciale: "Air France", paese: "FR", alleanza: "SkyTeam" },
+  { codiceIATA: "UA", nomeCommerciale: "United Airlines", paese: "US", alleanza: "Star Alliance" }
+])
+
+// AeroportoComp aggiuntivi
+db.aeroporto_comp.insertMany([
+  { codiceAeroporto: "MXP", codiceCompagnia: "AF" },
+  { codiceAeroporto: "JFK", codiceCompagnia: "UA" }
+])
+
+// Aeromobili aggiuntivi
+db.aeromobile.insertMany([
+  { idAeromobile: "F-MNOP", codiceIATAcomp: "AF", modello: "A330", produttore: "Airbus", annoProduzione: 2012, capacitaPasseggeri: 250 },
+  { idAeromobile: "U-QRST", codiceIATAcomp: "UA", modello: "B777", produttore: "Boeing", annoProduzione: 2019, capacitaPasseggeri: 350 }
+])
+
+// Voli Programmati aggiuntivi
+db.volo_programmato.insertMany([
+  {
+    numeroVolo: "AF4321",
+    idaporigine: "MXP",
+    idapdestinazione: "CDG",
+    giorniOperativi: [1, 2, 3, 4, 5],
+    durataMinuti: 90,
+    orarioppartenza: "2025-12-04T07:00:00Z",
+    orarioparrivo: "2025-12-04T08:30:00Z"
+  },
+  {
+    numeroVolo: "UA8765",
+    idaporigine: "JFK",
+    idapdestinazione: "LAX",
+    giorniOperativi: [1, 3, 5, 7],
+    durataMinuti: 360,
+    orarioppartenza: "2025-12-05T14:00:00Z",
+    orarioparrivo: "2025-12-05T20:00:00Z"
+  }
+])
+
+// Voli Operativi aggiuntivi
+const gate5 = db.gate.findOne({ numeroGate: 5 })._id
+const gate6 = db.gate.findOne({ numeroGate: 6 })._id
+const aeroAF = db.aeromobile.findOne({ idAeromobile: "F-MNOP" })._id
+const aeroUA = db.aeromobile.findOne({ idAeromobile: "U-QRST" })._id
+
+db.volo_operativo.insertMany([
+  {
+    idvolo: "AF4321-20251204",
+    dataOraPartenza: "2025-12-04T07:10:00Z",
+    statoVolo: "Boarding",
+    gateAssegnato: gate5,
+    aeromobile: aeroAF,
+    personale: [
+      { matricola: "P020", nome: "Pierre", cognome: "Dupont", ruolo: "Comandante" },
+      { matricola: "P021", nome: "Claire", cognome: "Martin", ruolo: "Assistente di Volo" }
+    ]
+  },
+  {
+    idvolo: "UA8765-20251205",
+    dataOraPartenza: "2025-12-05T14:15:00Z",
+    statoVolo: "Programmato",
+    gateAssegnato: gate6,
+    aeromobile: aeroUA,
+    personale: [
+      { matricola: "P030", nome: "John", cognome: "Smith", ruolo: "Comandante" },
+      { matricola: "P031", nome: "Emily", cognome: "Johnson", ruolo: "Hostess" }
+    ]
+  }
+])
+
+// Passeggeri aggiuntivi
+db.passeggero.insertMany([
+  {
+    id: "PS003",
+    nome: "Alessandro",
+    cognome: "Ricci",
+    dataNascita: "1992-07-22",
+    prenotazioni: [
+      { PNR: "LMN456", classeViaggio: "Premium Economy", statoPrenotazione: "Confermata", dataPrenotazione: "2025-11-28" }
+    ]
+  },
+  {
+    id: "PS004",
+    nome: "Sarah",
+    cognome: "Williams",
+    dataNascita: "1988-09-12",
+    prenotazioni: [
+      { PNR: "QRS987", classeViaggio: "First", statoPrenotazione: "Imbarcato", dataPrenotazione: "2025-11-29" }
+    ]
+  }
+])
+
+// Biglietti aggiuntivi
+const voloOpAF = db.volo_operativo.findOne({ idvolo: "AF4321-20251204" })._id
+const voloOpUA = db.volo_operativo.findOne({ idvolo: "UA8765-20251205" })._id
+const pass3 = db.passeggero.findOne({ id: "PS003" })._id
+const pass4 = db.passeggero.findOne({ id: "PS004" })._id
+
+db.biglietto.insertMany([
+  { numeroBiglietto: "000-1111111111", postoAssegnato: "15B", voloOperativo: voloOpAF, passeggero: pass3 },
+  { numeroBiglietto: "000-2222222222", postoAssegnato: "1A", voloOperativo: voloOpUA, passeggero: pass4 }
+])
