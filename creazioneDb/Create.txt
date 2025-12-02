@@ -1,0 +1,218 @@
+use aeroporto
+
+db.createCollection("aeroporto", {
+  validator: {
+    $jsonSchema: {
+      bsonType: "object",
+      required: ["codiceIATA", "nome", "città"],
+      properties: {
+        codiceIATA: { bsonType: "string", pattern: "^[A-Z]{3}$" },
+        paese: { bsonType: "string", enum: ["IT", "FR", "DE", "ES", "UK", "US"] },
+        nome: { bsonType: "string" },
+        città: { bsonType: "string" },
+        fusoOrario: { bsonType: "string" },
+        coordinate: {
+          bsonType: "object",
+          required: ["lat", "lon"],
+          properties: {
+            lat: { bsonType: "double" },
+            lon: { bsonType: "double" }
+          }
+        },
+        terminal: {
+          bsonType: "array",
+          items: {
+            bsonType: "object",
+            required: ["codiceTerminal", "tipo"],
+            properties: {
+              codiceTerminal: { bsonType: "string", pattern: "^T[1-9]$" },
+              tipo: { bsonType: "string", enum: ["Check-in", "Security", "Boarding", "Baggage"] }
+            }
+          }
+        }
+      }
+    }
+  },
+  validationLevel: "strict",
+  validationAction: "error"
+})
+
+db.aeroporto.createIndex({ codiceIATA: 1 }, { unique: true })
+
+db.createCollection("gate", {
+  validator: {
+    $jsonSchema: {
+      bsonType: "object",
+      required: ["numeroGate", "stato"],
+      properties: {
+        numeroGate: { bsonType: "int" },
+        stato: { bsonType: "string", enum: ["Libero", "Occupato", "In Manutenzione", "Chiuso"] }
+      }
+    }
+  },
+  validationLevel: "strict",
+  validationAction: "error"
+})
+
+db.createCollection("aeroporto_comp", {
+  validator: {
+    $jsonSchema: {
+      bsonType: "object",
+      required: ["codiceAeroporto", "codiceCompagnia"],
+      properties: {
+        codiceAeroporto: { bsonType: "string", pattern: "^[A-Z]{3}$" },
+        codiceCompagnia: { bsonType: "string", pattern: "^[A-Z]{2}$" }
+      }
+    }
+  },
+  validationLevel: "strict",
+  validationAction: "error"
+})
+
+db.createCollection("compagnia_aerea", {
+  validator: {
+    $jsonSchema: {
+      bsonType: "object",
+      required: ["codiceIATA", "nomeCommerciale", "paese", "alleanza"],
+      properties: {
+        codiceIATA: { bsonType: "string", pattern: "^[A-Z]{2}$" },
+        nomeCommerciale: { bsonType: "string" },
+        paese: { bsonType: "string" },
+        alleanza: { bsonType: "string", enum: ["SkyTeam", "Star Alliance", "Oneworld", "Indipendente"] }
+      }
+    }
+  },
+  validationLevel: "strict",
+  validationAction: "error"
+})
+
+db.compagnia_aerea.createIndex({ codiceIATA: 1 }, { unique: true })
+
+db.createCollection("aeromobile", {
+  validator: {
+    $jsonSchema: {
+      bsonType: "object",
+      required: ["idAeromobile", "codiceIATAcomp", "modello", "produttore", "annoProduzione", "capacitaPasseggeri"],
+      properties: {
+        idAeromobile: { bsonType: "string", pattern: "^[A-Z]-[A-Z]{4}$" },
+        codiceIATAcomp: { bsonType: "string", pattern: "^[A-Z]{2}$" },
+        modello: { bsonType: "string" },
+        produttore: { bsonType: "string" },
+        annoProduzione: { bsonType: "int", minimum: 1980, maximum: 2025 },
+        capacitaPasseggeri: { bsonType: "int", minimum: 1, maximum: 1000 }
+      }
+    }
+  },
+  validationLevel: "strict",
+  validationAction: "error"
+})
+
+db.aeromobile.createIndex({ idAeromobile: 1 }, { unique: true })
+
+db.createCollection("volo_programmato", {
+  validator: {
+    $jsonSchema: {
+      bsonType: "object",
+      required: ["numeroVolo", "idaporigine", "idapdestinazione", "giorniOperativi", "durataMinuti", "orarioppartenza", "orarioparrivo"],
+      properties: {
+        numeroVolo: { bsonType: "string", pattern: "^[A-Z]{2,3}[0-9]{3,4}$" },
+        idaporigine: { bsonType: "string", pattern: "^[A-Z]{3}$" },
+        idapdestinazione: { bsonType: "string", pattern: "^[A-Z]{3}$" },
+        giorniOperativi: {
+          bsonType: "array",
+          minItems: 1,
+          items: { bsonType: "int", minimum: 1, maximum: 7 }
+        },
+        durataMinuti: { bsonType: "int", minimum: 1 },
+        orarioppartenza: { bsonType: "string" },
+        orarioparrivo: { bsonType: "string" }
+      }
+    }
+  },
+  validationLevel: "strict",
+  validationAction: "error"
+})
+
+db.volo_programmato.createIndex({ numeroVolo: 1 }, { unique: true })
+
+db.createCollection("volo_operativo", {
+  validator: {
+    $jsonSchema: {
+      bsonType: "object",
+      required: ["idvolo", "dataOraPartenza", "statoVolo", "gateAssegnato", "aeromobile"],
+      properties: {
+        idvolo: { bsonType: "string" },
+        dataOraPartenza: { bsonType: "string" },
+        statoVolo: { bsonType: "string", enum: ["Programmato", "Boarding", "In Volo", "Atterrato", "Cancellato", "Ritardato"] },
+        gateAssegnato: { bsonType: "objectId" },
+        aeromobile: { bsonType: "objectId" },
+        personale: {
+          bsonType: "array",
+          items: {
+            bsonType: "object",
+            required: ["matricola", "nome", "cognome", "ruolo"],
+            properties: {
+              matricola: { bsonType: "string" },
+              nome: { bsonType: "string" },
+              cognome: { bsonType: "string" },
+              ruolo: { bsonType: "string", enum: ["Comandante", "Primo Ufficiale", "Assistente di Volo", "Tecnico", "Hostess"] }
+            }
+          }
+        }
+      }
+    }
+  },
+  validationLevel: "strict",
+  validationAction: "error"
+})
+
+db.createCollection("passeggero", {
+  validator: {
+    $jsonSchema: {
+      bsonType: "object",
+      required: ["id", "nome", "cognome"],
+      properties: {
+        id: { bsonType: "string" },
+        nome: { bsonType: "string" },
+        cognome: { bsonType: "string" },
+        dataNascita: { bsonType: "string" },
+        prenotazioni: {
+          bsonType: "array",
+          items: {
+            bsonType: "object",
+            required: ["PNR", "classeViaggio", "statoPrenotazione", "dataPrenotazione"],
+            properties: {
+              PNR: { bsonType: "string", pattern: "^[A-Z0-9]{6}$" },
+              classeViaggio: { bsonType: "string", enum: ["Economy", "Premium Economy", "Business", "First"] },
+              statoPrenotazione: { bsonType: "string", enum: ["Confermata", "Check-in", "Imbarcato", "No-show"] },
+              dataPrenotazione: { bsonType: "string" }
+            }
+          }
+        }
+      }
+    }
+  },
+  validationLevel: "strict",
+  validationAction: "error"
+})
+
+db.passeggero.createIndex({ id: 1 }, { unique: true })
+
+db.createCollection("biglietto", {
+  validator: {
+    $jsonSchema: {
+      bsonType: "object",
+      required: ["numeroBiglietto", "postoAssegnato", "voloOperativo", "passeggero"],
+      properties: {
+        numeroBiglietto: { bsonType: "string", pattern: "^000-[0-9]{10}$" },
+        postoAssegnato: { bsonType: "string", pattern: "^[0-9]{1,3}[A-F]$" },
+        voloOperativo: { bsonType: "objectId" },
+        passeggero: { bsonType: "objectId" }
+      }
+    }
+  },
+  validationLevel: "strict",
+  validationAction: "error"
+})
+
+db.biglietto.createIndex({ numeroBiglietto: 1 }, { unique: true })
